@@ -12,7 +12,8 @@ public class ServerStarter {
 			System.exit(1);
 		}
 		Server s=new Server(args[0]);
+		Naming.rebind( "rmi://" + HOST + "/" + s.getname() , s );
 		ServerGui gui=new ServerGui(s);
-		Naming.rebind( "rmi://" + HOST + "/" + s.getname() , s );	
+		
 	}
 }

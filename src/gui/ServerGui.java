@@ -5,6 +5,8 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.net.MalformedURLException;
+import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Observable;
 import java.util.Observer;
@@ -25,30 +27,35 @@ public class ServerGui extends JFrame implements Observer {
 	private JPanel rightpanel=new JPanel();//server connessi
 	private JPanel leftpanel=new JPanel();//client connessi
 	private JPanel botpanel=new JPanel();//Log
-	private JPanel toppanel=new JPanel();
-	private JList rightarea = new JList();
-	private JList leftarea = new JList();
-	private JTextArea botarea = new JTextArea(5,20);
-	
+	private JList<String> rightarea = new JList<String>();
+	private JList<String> leftarea = new JList<String>();
+	private JTextArea botarea = new JTextArea(8,20);
+	class WindowEventHandler extends WindowAdapter {
+		  public void windowClosing(WindowEvent evt) {
+				try {
+					s.uscita();
+				} catch (RemoteException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (MalformedURLException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NotBoundException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			  dispose();
+		  }
+	}
 	public ServerGui(Server a){                   //costruttore
 		s=a;
-		class WindowEventHandler extends WindowAdapter {
-			  public void windowClosing(WindowEvent evt) {
-				  //try {
-					s.uscita();//metodo da fare su server
-				//} catch (RemoteException e) {}
-				  dispose();
-				  System.exit(0);
-			  }
-		}
+		addWindowListener(new WindowEventHandler());
 		//creo i vari pannelli
 		JScrollPane scrollbotPanel = new JScrollPane(botarea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		botpanel.setLayout( new GridLayout(1,1) );
 		botpanel.setBorder(BorderFactory.createTitledBorder("Log"));
 		botpanel.add(scrollbotPanel);
 		
-		FlowLayout gl2 = new FlowLayout(FlowLayout.CENTER);
-		toppanel.setLayout(gl2);
 		
 		JScrollPane scrollrightPanel = new JScrollPane(rightarea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		rightpanel.setLayout( new GridLayout(1,1) );
@@ -60,13 +67,13 @@ public class ServerGui extends JFrame implements Observer {
 		leftpanel.setLayout( new GridLayout(1,1) );
 		leftpanel.setBorder(BorderFactory.createTitledBorder("Client Connessi"));
 		leftpanel.add(scrollleftPanel);
-		toppanel.add(leftpanel);
-		toppanel.add(rightpanel);
+		
 		setLayout(new BorderLayout());
-		add(toppanel,  BorderLayout.NORTH);
+		add(rightpanel,  BorderLayout.EAST);
+		add(leftpanel,  BorderLayout.WEST);
 		add(botpanel ,  BorderLayout.SOUTH );
 		setTitle( "Server "+s.getname());
-		setSize( 500,600 );
+		setSize( 600,700 );
 		addWindowListener(new WindowEventHandler());
 	    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 		setVisible(true);
