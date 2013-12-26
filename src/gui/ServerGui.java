@@ -26,9 +26,9 @@ public class ServerGui extends JFrame implements Observer {
 	private JPanel leftpanel=new JPanel();//client connessi
 	private JPanel botpanel=new JPanel();//Log
 	private JPanel toppanel=new JPanel();
-	private JTextArea rightarea = new JTextArea(5,20);
+	private JList rightarea = new JList();
 	private JList leftarea = new JList();
-	private JList botarea = new JList();
+	private JTextArea botarea = new JTextArea(5,20);
 	
 	public ServerGui(Server a){                   //costruttore
 		s=a;
