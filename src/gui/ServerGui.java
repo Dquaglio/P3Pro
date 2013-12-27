@@ -44,6 +44,7 @@ public class ServerGui extends JFrame implements Observer {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
+				setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		  }
 	}
 	public ServerGui(Server a){                   //costruttore
@@ -74,7 +75,7 @@ public class ServerGui extends JFrame implements Observer {
 		setTitle( "Server "+s.getname());
 		setSize( 600,700 );
 		addWindowListener(new WindowEventHandler());
-	    setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+	    //setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 		setVisible(true);
 		System.out.println("CI SONO ARRIVATO");
 		

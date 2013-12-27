@@ -24,7 +24,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 	
 	public void uscita() throws RemoteException, MalformedURLException, NotBoundException{
 		String[] a=(Naming.list("rmi://localhost/"));
-		System.out.println("ciao gay"+a[0]+" "+a[1]);
-		//Naming.unbind(a[0]);
+		System.out.println("ciao gay"+a[0]+" ");
+		//Naming.unbind("//localhost:1099/"+name);
 	}
 }

@@ -32,4 +32,7 @@ public class Client {
 			e.printStackTrace();
 		}
 	}
+	public String getname(){
+		return name;
+	}
 }

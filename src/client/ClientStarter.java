@@ -1,5 +1,7 @@
 package client;
 
+import gui.ClientGui;
+
 import java.util.Vector;
 
 public class ClientStarter {
@@ -16,5 +18,6 @@ public class ClientStarter {
 			v.add(a);
 		}
 		Client c=new Client(args[0],args[1],args[2],v);
+		ClientGui gui=new ClientGui(c);
 	}
 }
