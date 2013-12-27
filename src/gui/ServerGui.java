@@ -44,7 +44,6 @@ public class ServerGui extends JFrame implements Observer {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-			  dispose();
 		  }
 	}
 	public ServerGui(Server a){                   //costruttore

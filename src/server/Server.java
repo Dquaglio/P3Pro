@@ -16,15 +16,15 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 	private final VistaModel model = new VistaModel();
 	public Server(String n)throws RemoteException{
 		name=n;
-		System.out.println("Server creato"+name);
+		System.out.println("Server creato spero"+name);
 	}
 	public String getname(){
 		return name;
 	}
 	
 	public void uscita() throws RemoteException, MalformedURLException, NotBoundException{
-		String a=(Naming.list("rmi://localhost/"))[0];
-		System.out.println("ciao gay dio"+a);
-		Naming.unbind("rmi://localhost/"+name);
+		String[] a=(Naming.list("rmi://localhost/"));
+		System.out.println("ciao gay"+a[0]+" "+a[1]);
+		//Naming.unbind(a[0]);
 	}
 }
