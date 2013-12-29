@@ -5,7 +5,15 @@ JC = javac
 		$(JC) $*.java
 CLASSES = \
 		server/ServerStarter.java\
-		client/ClientStarter.java
+		server/RServer.java\
+		server/Server.java\
+		server/VistaModel.java\
+		client/ClientStarter.java\
+		client/Client.java\
+		client/RClient.java\
+		client/Risorsa.java\
+		gui/ClientGui.java\
+		gui/ServerGui.java
 
 default: classes
 
@@ -15,9 +23,8 @@ start:
 	rmiregistry &
 	sleep 2
 	java server.ServerStarter Razorback1 &
-	java server.ServerStarter Razorback2
+	java server.ServerStarter Razorback2 &
 	sleep 2
+	java client.ClientStarter Client1 Razorback1 4 A 5 B 4
 clean:
-	$(RM) client/*.class
-	$(RM) gui/*.class
-	$(RM) server/*.class
+	killall -q rmiregistry

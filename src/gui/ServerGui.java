@@ -44,7 +44,6 @@ public class ServerGui extends JFrame implements Observer {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
-				setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		  }
 	}
 	public ServerGui(Server a){                   //costruttore
@@ -61,7 +60,6 @@ public class ServerGui extends JFrame implements Observer {
 		rightpanel.setLayout( new GridLayout(1,1) );
 		rightpanel.setBorder(BorderFactory.createTitledBorder("Server Connessi"));
 		rightpanel.add(scrollrightPanel);
-		
 	
 		JScrollPane scrollleftPanel = new JScrollPane(leftarea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		leftpanel.setLayout( new GridLayout(1,1) );

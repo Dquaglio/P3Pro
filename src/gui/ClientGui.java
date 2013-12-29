@@ -5,8 +5,10 @@ import gui.ServerGui.WindowEventHandler;
 
 import java.awt.BorderLayout;
 import java.awt.GridLayout;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
@@ -17,13 +19,15 @@ import javax.swing.JTextField;
 import javax.swing.WindowConstants;
 
 import client.Client;
+import client.Risorsa;
 
 public class ClientGui extends JFrame{
 	private Client c;
+	DefaultListModel<Risorsa> model = new DefaultListModel<Risorsa>();
 	private JTextField ricerca=new JTextField();
 	private JButton go=new JButton();
 	private JButton disconnect=new  JButton();
-	private JList<String> fcompleti=new JList<String>();
+	private JList<Risorsa> fcompleti=new JList<Risorsa>();
 	private JList<String> cdownload=new JList<String>();
 	private JTextArea Log=new JTextArea(8,20);
 	private JPanel toppanel=new JPanel();
@@ -66,7 +70,16 @@ public class ClientGui extends JFrame{
 		setTitle( c.getname());
 		setSize( 600,700 );
 		setVisible(true);
-		System.out.println("Gui client creata");
-		
+		System.out.println("Gui client creata");	
 	}
+	
+	public void addLog(String s){
+		Log.append(s+"\n");
+	}
+	 public void setrisorse(Vector<Risorsa> l) {
+	        for (int i=0; i<l.size(); i++) { 
+	        	model.addElement(l.get(i)); 
+	        }
+	        fcompleti.setModel(model);
+	    }
 }

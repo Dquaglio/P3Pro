@@ -15,9 +15,9 @@ public class ClientStarter {
 		Risorsa a;
 		for(int i=3;i<args.length;i=i+2){
 			a=new Risorsa(args[i],args[i+1]);
+			System.out.println(args[i]+args[i+1]);
 			v.add(a);
 		}
 		Client c=new Client(args[0],args[1],args[2],v);
-		ClientGui gui=new ClientGui(c);
 	}
 }
