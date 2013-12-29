@@ -31,9 +31,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		}
 		rs.addclient(this);
 	}
-	public String getname(){
-		return name;
-	}
 	
 	public static RServer connetti(String  s){
 		RServer ref = null;
@@ -48,5 +45,9 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		}
 		return ref;
 		//ho il rif rem al server
+	}
+
+	public String getname() {
+		return name;
 	}
 }

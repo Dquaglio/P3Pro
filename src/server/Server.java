@@ -14,8 +14,8 @@ import server.VistaModel;
 
 public class Server extends java.rmi.server.UnicastRemoteObject implements RServer{
 	private String name;
-	private Vector<Server> listaserver;
-	private Vector<RClient> listaclient;
+	private Vector<RServer> listaserver=new Vector<RServer>();
+	private Vector<RClient> listaclient=new Vector<RClient>();
 	ServerGui gui;
 	private final VistaModel model = new VistaModel();
 	public Server(String n)throws RemoteException{
@@ -34,7 +34,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 	}
 	public boolean addclient(RClient c) throws RemoteException {
 		listaclient.add(c);
-		System.out.println("Aggiunto Client");
+		gui.addLog("Si e' connesso il client"+c.getname());
 		return true;
 	}
 }

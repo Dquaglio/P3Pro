@@ -29,7 +29,7 @@ public class ServerGui extends JFrame implements Observer {
 	private JPanel botpanel=new JPanel();//Log
 	private JList<String> rightarea = new JList<String>();
 	private JList<String> leftarea = new JList<String>();
-	private JTextArea botarea = new JTextArea(8,20);
+	private JTextArea Log = new JTextArea(8,20);
 	class WindowEventHandler extends WindowAdapter {
 		  public void windowClosing(WindowEvent evt) {
 				try {
@@ -50,7 +50,7 @@ public class ServerGui extends JFrame implements Observer {
 		s=a;
 		addWindowListener(new WindowEventHandler());
 		//creo i vari pannelli
-		JScrollPane scrollbotPanel = new JScrollPane(botarea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JScrollPane scrollbotPanel = new JScrollPane(Log, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		botpanel.setLayout( new GridLayout(1,1) );
 		botpanel.setBorder(BorderFactory.createTitledBorder("Log"));
 		botpanel.add(scrollbotPanel);
@@ -77,6 +77,9 @@ public class ServerGui extends JFrame implements Observer {
 		setVisible(true);
 		System.out.println("CI SONO ARRIVATO");
 		
+	}
+	public void addLog(String s){
+		Log.append(s);
 	}
 	public void update(Observable o, Object arg) {
 		// TODO Auto-generated method stub
