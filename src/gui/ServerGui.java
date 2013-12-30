@@ -30,6 +30,7 @@ public class ServerGui extends JFrame implements Observer {
 	private JList<String> rightarea = new JList<String>();
 	private JList<String> leftarea = new JList<String>();
 	private JTextArea Log = new JTextArea(8,20);
+	
 	class WindowEventHandler extends WindowAdapter {
 		  public void windowClosing(WindowEvent evt) {
 				try {
