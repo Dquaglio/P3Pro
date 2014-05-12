@@ -25,6 +25,6 @@ start:
 	java server.ServerStarter Razorback1 &
 	java server.ServerStarter Razorback2 &
 	sleep 2
-	java client.ClientStarter Client1 Razorback1 4 A 5 B 4
+	java client.ClientStarter Client1 Razorback1 4 A 5 B 4 &
 clean:
-	killall -q rmiregistry
+	killall -q rmiregistry &
