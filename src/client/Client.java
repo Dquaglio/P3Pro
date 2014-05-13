@@ -10,14 +10,14 @@ import java.util.Vector;
 
 import risorsa.Risorsa;
 import server.RServer;
-import server.Server;
-
 public class Client extends java.rmi.server.UnicastRemoteObject implements RClient {
 	private static final String HOST = "localhost";
+	private int sleep=2000;//tempo di upload
 	private int download; //capacità di download del client
 	private String name;   //nome client
 	private RServer rs=null;    // riferimento al server a cui è connesso
 	private Vector<Risorsa> risorse; //vettore di risorse di cui dispone il client
+	private Integer downloadattivi=0;//numero di download attivi
 	ClientGui gui=new ClientGui(this);
 	//costruttore
 	public Client(String n,String s,String d,Vector<Risorsa>r) throws RemoteException{// n= nome ; s=  nome server ; d capacità di download; r vettore di risorse
@@ -48,48 +48,95 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		return ref;
 		//ho il rif rem al server
 	}
-	//thread addetto al download 
+	//thread addetto al download parte alla pressione del tasto download
 	class Download extends Thread{
 		//CAMPI DATI
 		String nome;
 		int parti;
-		Vector<RServer> ServerRisorsa=null;
+		ScaricaRisorsa[] downloads;//array di thread 
+		Vector<RClient> ClientRisorsa=null;
 		Download(String n,int p){
 			nome=n;
 			parti=p;
 		}
+		//cerca di scaricare la risorsa
 		public void run(){
 			try {
-				ServerRisorsa=rs.cercarisorsa(nome,parti);
+				ClientRisorsa=rs.cercarisorsa(nome,parti);//ottengo i client con la risorsa
 			} catch (RemoteException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				return;
+			}
+			//ho il vettore di client con la risorsa
+			if(ClientRisorsa.size()>parti)
+				downloads=new ScaricaRisorsa[ClientRisorsa.size()];//array inizializzato con il massimo numero possibile di download contemporanei
+			else
+				downloads=new ScaricaRisorsa[parti];
+			int partiscaricate=0; //contatore di parti scaricate correttamente
+			while(partiscaricate!=parti){
+				synchronized(downloadattivi){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
+					while(downloadattivi<download){
+						int downloadpossibili=download-downloadattivi;
+						for(int i=0;i<downloadpossibili;i++){
+							try{
+								downloads[i]=new ScaricaRisorsa(ClientRisorsa.get(i));
+								downloads[i].start();//
+								downloads[i].getdone();//ritorna se successo nel donwload o n
+							}
+							catch(Exception e){
+								
+							}
+						}
+					}
+				}
 			}
 		}
 	}
 	//metodo per il download di una risorsa
 	class ScaricaRisorsa extends Thread{
 		//dati della risorsa da cercare
-		String nome;
-		int parti;
 		boolean scaricata=false;
-		
-		ScaricaRisorsa(String n,int p){
-			nome=n;
-			parti=p;
+		RClient client;
+		ScaricaRisorsa(RClient c){
+			client=c;
 		}
 		public void run(){
-			
-				
-			
-			while(scaricata==false){//continua a cercare di scaricarla fino a che non hai la risorsa
-				
+			try {
+				client.upload();//invocato sul client da cui voglio scaricare
+			} catch (RemoteException e) {
+				// GESTISCO L' eccezione di fallito download
+				e.printStackTrace();
 			}
 		}
-		
+		public boolean getdone(){
+			return scaricata;
+		}
+	}
+	
+	public void upload()throws RemoteException{
+		try {
+			Thread.sleep(sleep);//simulo il download
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	//METODI VARI GET
 	public String getname() {
 		return name;
+	}
+	//metodo per la ricerca della risorsa desiderata
+	public RClient haveresource(String n,int p) throws RemoteException {
+		//ricerco nell array la risorsa
+		boolean	found=false;
+		for(int i=0;!found || i<risorse.size();i++){
+			if(risorse.get(i).getnome()==n && risorse.get(i).getparti()==p)
+				found=true;
+		}
+		if(found)
+			return this;
+		else 
+			return null;
 	}
 }

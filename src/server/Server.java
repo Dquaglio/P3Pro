@@ -10,6 +10,7 @@ import java.util.Vector;
 
 import client.Client;
 import client.RClient;
+import risorsa.RRisorsa;
 import server.VistaModel;
 
 public class Server extends java.rmi.server.UnicastRemoteObject implements RServer{
@@ -25,7 +26,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 		name=n;
 		System.out.println("Server creato vero"+name);
 		gui=new ServerGui(this);
-		connetti=new connettiserver(this);
+		connetti=new connettiserver();
 		connetti.start();
 	}
 	
@@ -48,21 +49,20 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 	}
 	
 	class connettiserver extends  Thread{//thread per la connessione ai server
-		private Server s;//contiene il server che vuole aggiornare la propria lista PROBABILMENTE s inutile perche basta usare THIS
-		public connettiserver(Server s){ 
+		//contiene il server che vuole aggiornare la propria lista PROBABILMENTE s inutile perche basta usare THIS
+		public connettiserver(){ 
 			setDaemon(true);
-			this.s=s;
 		}
 		public void run(){
 			while(true){
 				synchronized(lock){
 					try {
 						String[] a=Naming.list("rmi://localhost/");// lista di tutti i server attualmente registrati 
+						listaserver.clear();
 						for(int i=0;i<a.length;i++){
 							RServer rs=(RServer)Naming.lookup(a[i]);
-							System.out.println("Controllo"+rs.getname());
-							if(!s.checkserver(rs)){// se non è già nella lista lo aggiungo
-								s.addserver(rs);
+							if(!listaserver.contains(rs)){// se il server non è già in lista lo aggiungo
+								listaserver.add(rs);
 							}//TO DO else si potrebbe controllare se è nella lista ma non esiste(è cashato) e rimuoverlo
 						}
 					} catch (RemoteException e) {
@@ -80,14 +80,25 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 		}
 	}
 	//metodo di RServer
-	public Vector<RServer> cercarisorsa(String n,int p)throws RemoteException{
+	public Vector<RClient> cercarisorsa(String n,int p)throws RemoteException{
 		//invoco il metodo che cerca tra le mie risorse la risorsa cercata
-		Vector<RServer> listaconrisorsa=new Vector<RServer>();
-		listaconrisorsa.add(gotresource(n,p));
+		Vector<RClient> listaconrisorsa=new Vector<RClient>();
+		for(int i=0;i<listaserver.size();i++){//scorro tutti i server e mi faccio dare la lista di client con la risorsa
+			Vector<RClient>conrisorsa=listaserver.get(i).gotresource(n, p);
+			if(conrisorsa!=null)
+				listaconrisorsa.addAll(conrisorsa);//aggiungo alla lista gli elementi del server i
+		}
 		return listaconrisorsa;
 	}
-	private RServer gotresource(String n, int p) {
-		return this;
+	//metodo che ritorna la lista di client con la risorsa cercata
+	public Vector<RClient> gotresource(String n, int p)throws RemoteException{
+		Vector<RClient> ritorno=new Vector<RClient>();
+		for(int i=0;i<listaclient.size();i++){
+			RClient rc=listaclient.get(i).haveresource(n, p);
+			if(rc!=null)
+				ritorno.add(rc);
+		}
+		return ritorno;
 	}
 
 	//public boolean downloadrequest(RRisorsa r)
