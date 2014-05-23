@@ -21,7 +21,7 @@ import javax.swing.WindowConstants;
 
 import server.Server;
 
-public class ServerGui extends JFrame implements Observer {
+public class ServerGui extends JFrame{
 	private Server  s;//puntatore al server
 	//parti grafiche
 	private JPanel rightpanel=new JPanel();//server connessi
@@ -81,9 +81,5 @@ public class ServerGui extends JFrame implements Observer {
 	}
 	public void addLog(String s){
 		Log.append(s);
-	}
-	public void update(Observable o, Object arg) {
-		// TODO Auto-generated method stub
-		
 	}
 }

@@ -19,12 +19,19 @@ default: classes
 
 classes: $(CLASSES:.java=.class)
 
+clean: 
+	rm -f *.class
 start:
 	rmiregistry &
 	sleep 2
 	java server.ServerStarter Razorback1 &
 	java server.ServerStarter Razorback2 &
 	sleep 2
-	java client.ClientStarter Client1 Razorback1 4 A 5 B 4 &
-clean:
+	java client.ClientStarter Client1 Razorback1 4 A 5 C 4 &
+	java client.ClientStarter Client2 Razorback1 6 D 5 C 4 &
+	java client.ClientStarter Client3 Razorback2 2 D 5 B 4 &
+	java client.ClientStarter Client4 Razorback2 4 A 5 B 4 &
+stop:
 	killall -q rmiregistry &
+	sleep 2
+	killall -q xterm &

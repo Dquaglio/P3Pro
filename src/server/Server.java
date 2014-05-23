@@ -10,17 +10,16 @@ import java.util.Vector;
 
 import client.Client;
 import client.RClient;
-import risorsa.RRisorsa;
 import server.VistaModel;
 
 public class Server extends java.rmi.server.UnicastRemoteObject implements RServer{
+	private static final String HOST = "localhost";
 	private String name;  //nome del server
 	private Vector<RServer> listaserver=new Vector<RServer>();//lista di server connessi
 	private Vector<RClient> listaclient=new Vector<RClient>();//lista di client connessi
 	private ServerGui gui;
 	private Thread connetti;
 	private Object lock=new Object();
-	private final VistaModel model = new VistaModel();
 	
 	public Server(String n)throws RemoteException{//COSTRUTTORE
 		name=n;
@@ -29,11 +28,13 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 		connetti=new connettiserver();
 		connetti.start();
 	}
-	
 	public void uscita() throws RemoteException, MalformedURLException, NotBoundException{
 		synchronized(lock){
-			connetti.interrupt();
-			Naming.unbind("rmi://localhost/"+name);
+			connetti.interrupt();//interrompo il Thread che controlla i server circostanti
+			Naming.unbind("rmi://" + HOST + "/"+name);
+			for(int i=0;i<listaclient.size();i++){
+				listaclient.get(i).disconnectServer();
+			}
 			System.out.println("Disconnesso il server"+name);
 		}
 	}
@@ -50,53 +51,69 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 	
 	class connettiserver extends  Thread{//thread per la connessione ai server
 		//contiene il server che vuole aggiornare la propria lista PROBABILMENTE s inutile perche basta usare THIS
-		public connettiserver(){ 
-			setDaemon(true);
-		}
 		public void run(){
 			while(true){
 				synchronized(lock){
-					try {
-						String[] a=Naming.list("rmi://localhost/");// lista di tutti i server attualmente registrati 
-						listaserver.clear();
-						for(int i=0;i<a.length;i++){
-							RServer rs=(RServer)Naming.lookup(a[i]);
-							if(!listaserver.contains(rs)){// se il server non è già in lista lo aggiungo
-								listaserver.add(rs);
-							}//TO DO else si potrebbe controllare se è nella lista ma non esiste(è cashato) e rimuoverlo
+						try {
+							String[] a=Naming.list("rmi://" + HOST + "/");// lista di tutti i server attualmente registrati 
+							listaserver.clear();
+							for(int i=0;i<a.length;i++){
+								RServer rs=(RServer)Naming.lookup(a[i]);
+								if(!listaserver.contains(rs)){// se il server non è già in lista lo aggiungo
+									listaserver.add(rs);
+								}//TO DO else si potrebbe controllare se è nella lista ma non esiste(è cashato) e rimuoverlo
+							}
+						} catch (RemoteException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (MalformedURLException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
+						} catch (NotBoundException e) {
+							// TODO Auto-generated catch block
+							e.printStackTrace();
 						}
-					} catch (RemoteException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (MalformedURLException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (NotBoundException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}	
+				}
+				try {
+					Thread.sleep(100);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					//e.printStackTrace();
 				}
 			}
 		}
 	}
-	//metodo di RServer
-	public Vector<RClient> cercarisorsa(String n,int p)throws RemoteException{
+	
+	//metodo di RServer chiamato da CLient
+	public Vector<RClient> cercarisorsa(String n,int p,RClient c)throws RemoteException{
 		//invoco il metodo che cerca tra le mie risorse la risorsa cercata
+		System.out.println("Il server" +name+"cerca la risorsa"+n+p);
 		Vector<RClient> listaconrisorsa=new Vector<RClient>();
-		for(int i=0;i<listaserver.size();i++){//scorro tutti i server e mi faccio dare la lista di client con la risorsa
-			Vector<RClient>conrisorsa=listaserver.get(i).gotresource(n, p);
-			if(conrisorsa!=null)
-				listaconrisorsa.addAll(conrisorsa);//aggiungo alla lista gli elementi del server i
+		synchronized(lock){
+			System.out.println("la lista di server connessi a"+name+"è di"+listaserver.size() );
+			for(int i=0;i<listaserver.size();i++){//scorro tutti i server e mi faccio dare la lista di client con la risorsa
+				if(!this.equals(listaserver.get(i))){
+					Vector<RClient>conrisorsa=listaserver.get(i).gotresource(n, p,c);
+					if(conrisorsa!=null)
+						listaconrisorsa.addAll(conrisorsa);//aggiungo alla lista gli elementi del server i
+			}}
 		}
+		System.out.println("IL server ritorna la lista con la risorsa "+name +"di dimensione"+listaconrisorsa.size());
 		return listaconrisorsa;
 	}
+	
 	//metodo che ritorna la lista di client con la risorsa cercata
-	public Vector<RClient> gotresource(String n, int p)throws RemoteException{
+	public Vector<RClient> gotresource(String n, int p,RClient c)throws RemoteException{
 		Vector<RClient> ritorno=new Vector<RClient>();
+		System.out.println("il server"+name+"cerca la risorsa"+n+p);
+		gui.addLog("Cerco la risorsa che mi è stata chiesta"+n+p);
 		for(int i=0;i<listaclient.size();i++){
-			RClient rc=listaclient.get(i).haveresource(n, p);
-			if(rc!=null)
-				ritorno.add(rc);
+			if(!listaclient.get(i).equals(c)){
+				System.out.println("il server"+name+" cerca la risorsa"+n+p+" da"+listaclient.get(i).getname());
+				RClient rc=listaclient.get(i).haveresource(n, p);	
+				if(rc!=null)
+					ritorno.add(rc);
+			}
 		}
 		return ritorno;
 	}
@@ -110,6 +127,13 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 	public boolean addserver(RServer s) throws RemoteException {//metodo che aggiunge al server s i server nuovi
 		listaserver.add(s);
 		gui.addLog("Connesso con il server"+s.getname());
+		return true;
+	}
+	public void disconnettiClient(Client client) throws RemoteException {
+		listaclient.remove(client);
+	}
+
+	public boolean exist() throws RemoteException {
 		return true;
 	}
 }

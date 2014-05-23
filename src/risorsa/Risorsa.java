@@ -10,6 +10,10 @@ public class Risorsa extends UnicastRemoteObject implements RRisorsa{
 		name=n;
 		parts=Integer.parseInt(p);
 	}
+	public Risorsa(String n,int p) throws RemoteException{
+		name=n;
+		parts=p;
+	}
 	public String getnome()throws RemoteException{
 		return name;
 	}
