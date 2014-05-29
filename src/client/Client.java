@@ -2,6 +2,8 @@ package client;
 
 import gui.ClientGui;
 
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.net.MalformedURLException;
 import java.rmi.Naming;
 import java.rmi.NotBoundException;
@@ -27,6 +29,14 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		risorse=r;
 		rs=connetti(s);
 		gui=new ClientGui(this);
+		gui.addWindowListener(new WindowAdapter(){	
+			public void windowClosing(WindowEvent evt) {
+				System.out.println("Window closed");
+				disconnect();
+				gui.setVisible(false);
+				gui.dispose();		
+			}
+		});
 		if(rs==null){
 			gui.addLog("Fallimento nella connessione al server"+s);
 		}
@@ -97,36 +107,32 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 			for(int j=0;j<ClientRisorsa.size();j++){//mi creo il vector 
 				downloads.add(new ScaricaRisorsa(ClientRisorsa.get(j),this));
 			}
-			if(downloads==null){
-				System.out.println("CAZZO");
-			}
-			while(partiscaricate!=parti){//finchè non ho scaricato tutte le parti o non ho nessuno da cui scaricare
-				System.out.println("FLAG A");
-				synchronized(downloadattivi){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
-					System.out.println("FLAG B");
-					//while(downloadattivi<download){
-						int downloadpossibili=download-downloadattivi;
+			if(downloads!=null){
+				while(partiscaricate!=parti){//finchè non ho scaricato tutte le parti o non ho nessuno da cui scaricare
+					synchronized(downloadattivi){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
+						int downloadpossibili=download-downloadattivi;//NB avendo il lock su download attivi e download non può cambiare valore so di fare un operazione sicura
 						for(int i=0;i<downloadpossibili && downloads.size()!=0;i++){
-								System.out.println("FLAG for "+i);
 								System.out.println("la dimensione di Download è" +downloads.size());
 								downloads.get(0).start();
 								downloadattivi=downloadattivi+1;
 								downloadsessione=downloadsessione+1;
 								//gui.addDownElement(name,nome,parti);
-								downloads.remove(0);
+								downloads.remove(0);//rimuovo la possibilità di scaricare da questo client in quanto un download è appena stato avviato
 								System.out.println("i client rimasti da cui posso scaricare sono"+downloads.size());
 						}
-					//}
+					}
 				}
 			}
 			if(downloads.size()==0 && partiscaricate!=parti){
 				//gestire errore di nessun client raggiungibile con risorsa
-				gui.addLog("Nessun client da cui scaricare la risorsa");
+				System.out.println("NON HAI SCARICATO LA RISORSA :(");
+				gui.addLog("Download della risorsa impossibile da portare a termine");
 			}
 			else{
 				//download effettutato correttamente
 				try {
 					risorse.add(new Risorsa(nome,parti));
+					System.out.println("HAI SCARICATO TUTTA LA RISORSA");
 				//	gui.completedownload(name,nome,parti);
 					gui.addLog("Risorsa scaricata correttamente");
 				} catch (RemoteException e) {
@@ -151,12 +157,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		}
 		public void run(){
 			try {
-				System.out.println("il client"+name+"cerca la risorsa da"+client.getname());
+				System.out.println("il client "+name+" cerca la risorsa da"+client.getname());
 				client.upload();//invocato sul client da cui voglio scaricare
-				System.out.println("RISORSA RICEVUTA");
+				System.out.println("RISORSA RICEVUTA da "+client.getname());
 				padre.partiscaricate=padre.partiscaricate+1;//non arriva qui se ci sono problemi
 				System.out.println("MAGIA 1");
-				padre.downloads.add(new ScaricaRisorsa(client,padre));
+				padre.downloads.add(new ScaricaRisorsa(client,padre));//il download da client è finito correttamente, posso se serve riscaricare da lui ora
 				System.out.println("MAGIA 2 con downloads size" +padre.downloads.size());
 				padre.downloadsessione=padre.downloadsessione-1;
 				System.out.println("MAGIA 3");
@@ -209,6 +215,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		}
 	}
 	public void disconnect() {
+		System.out.println("disconnetto il client da parte client");
         if (rs != null) {
             try {
                 rs.disconnettiClient(this);

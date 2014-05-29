@@ -79,15 +79,10 @@ public class ClientGui extends JFrame{
 		add(bot ,  BorderLayout.SOUTH);
 		setTitle(c.getname());
 		setSize( 600,700 );
-		setVisible(true);	
+		setVisible(true);
+		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 	}
-	class WindowEventHandler extends WindowAdapter {
-        public void windowClosing(WindowEvent evt) {
-            System.out.println("Window closed");
-            c.disconnect();
-            
-        }
-    }
+
 	public void CreateBotPanel(){
 		bot.setLayout(new GridLayout(1,1));
 		bot.setBorder(BorderFactory.createTitledBorder("Log"));

@@ -11,6 +11,6 @@ public interface RServer extends Remote {
 	public String getname()throws RemoteException;
 	public Vector<RClient> cercarisorsa(String nome, int parti, RClient c)throws RemoteException;
 	public Vector<RClient> gotresource(String n, int p,RClient c)throws RemoteException;
-	public void disconnettiClient(Client client)throws RemoteException;
+	public void disconnettiClient(RClient client)throws RemoteException;
 	public boolean exist()throws RemoteException;
 }

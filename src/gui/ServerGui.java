@@ -76,10 +76,10 @@ public class ServerGui extends JFrame{
 		addWindowListener(new WindowEventHandler());
 	    //setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
 		setVisible(true);
-		System.out.println("CI SONO ARRIVATO");
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		
 	}
 	public void addLog(String s){
-		Log.append(s);
+		Log.append(s+"\n");
 	}
 }

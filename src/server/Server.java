@@ -59,9 +59,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 							listaserver.clear();
 							for(int i=0;i<a.length;i++){
 								RServer rs=(RServer)Naming.lookup(a[i]);
-								if(!listaserver.contains(rs)){// se il server non è già in lista lo aggiungo
-									listaserver.add(rs);
-								}//TO DO else si potrebbe controllare se è nella lista ma non esiste(è cashato) e rimuoverlo
+								listaserver.add(rs);
 							}
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
@@ -92,11 +90,18 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 		synchronized(lock){
 			System.out.println("la lista di server connessi a"+name+"è di"+listaserver.size() );
 			for(int i=0;i<listaserver.size();i++){//scorro tutti i server e mi faccio dare la lista di client con la risorsa
-				if(!this.equals(listaserver.get(i))){
+				//if(!this.equals(listaserver.get(i))){
 					Vector<RClient>conrisorsa=listaserver.get(i).gotresource(n, p,c);
 					if(conrisorsa!=null)
 						listaconrisorsa.addAll(conrisorsa);//aggiungo alla lista gli elementi del server i
-			}}
+				//}	
+			}
+		}
+		if(listaconrisorsa.contains(c)){
+			System.out.println(listaconrisorsa.size());
+			System.out.println("la lista contiene il client che richiese");
+			listaconrisorsa.remove(c);
+			System.out.println(listaconrisorsa.size());
 		}
 		System.out.println("IL server ritorna la lista con la risorsa "+name +"di dimensione"+listaconrisorsa.size());
 		return listaconrisorsa;
@@ -108,7 +113,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 		System.out.println("il server"+name+"cerca la risorsa"+n+p);
 		gui.addLog("Cerco la risorsa che mi è stata chiesta"+n+p);
 		for(int i=0;i<listaclient.size();i++){
-			if(!listaclient.get(i).equals(c)){
+			if(!listaclient.get(i).equals(c)){//evito di controllare il client che me l ha chiesta
 				System.out.println("il server"+name+" cerca la risorsa"+n+p+" da"+listaclient.get(i).getname());
 				RClient rc=listaclient.get(i).haveresource(n, p);	
 				if(rc!=null)
@@ -129,8 +134,10 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 		gui.addLog("Connesso con il server"+s.getname());
 		return true;
 	}
-	public void disconnettiClient(Client client) throws RemoteException {
+	public void disconnettiClient(RClient client) throws RemoteException {
+		System.out.println("disconnetto il client"+listaclient.size());
 		listaclient.remove(client);
+		System.out.println("disconnetto il client"+listaclient.size());
 	}
 
 	public boolean exist() throws RemoteException {
