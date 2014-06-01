@@ -31,7 +31,7 @@ public class ClientGui extends JFrame{
 	private JButton disconnect=new  JButton();
 	private JList<Risorsa> fcompleti=new JList<Risorsa>();
 	private JList<String> cdownload=new JList<String>();
-	private Vector<oggettolista> listacdownload=null;
+	private Vector<oggettolista> listacdownload=new Vector<oggettolista>();
 	private JTextArea Log=new JTextArea(8,20);
 	private JPanel toppanel=new JPanel();
 	private JPanel top=new JPanel();
@@ -39,11 +39,11 @@ public class ClientGui extends JFrame{
 	private JPanel centerleft=new JPanel();
 	private JPanel centerright=new JPanel();
 	private JPanel bot=new JPanel();
-	private class oggettolista{
+	public class oggettolista{
 		String nomeclient;
 		String nomerisorsa;
 		int partirisorsa;
-		Integer status;
+		int status;
 		oggettolista(String nc,String nr,int p, Integer stat){
 			nomeclient=nc;
 			nomerisorsa=nr;
@@ -54,14 +54,16 @@ public class ClientGui extends JFrame{
 			status=stat;
 		}
 		public String getstatus(){
-			String state;
+			String state="non pervenuto";
 			if(status==0){
 				state="in download";
 			}
-			if(status==1)
+			if(status==1){
 				state="finito";
-			else
+			}
+			if(status==2){
 				state="fallito";
+			}
 			return "Client "+nomeclient+"risorsa "+nomerisorsa+partirisorsa+"status "+state;
 		}
 	}
@@ -139,7 +141,7 @@ public class ClientGui extends JFrame{
 		fcompleti.setModel(model);
 	}
 	public void addDownElement(String nc,String nr,int p) {
-		Integer status=0;
+		int status=0;
 		listacdownload.add(new oggettolista(nc,nr,p,status));
 		modelcoda.addElement(listacdownload.lastElement().getstatus());
         cdownload.setModel(modelcoda);//aggiorno la lista dei download

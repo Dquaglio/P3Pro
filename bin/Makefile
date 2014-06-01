@@ -11,7 +11,8 @@ CLASSES = \
 		client/ClientStarter.java\
 		client/Client.java\
 		client/RClient.java\
-		client/Risorsa.java\
+		risorsa/Risorsa.java\
+		risorsa/RRisorsa.java\
 		gui/ClientGui.java\
 		gui/ServerGui.java
 
@@ -33,5 +34,4 @@ start:
 	java client.ClientStarter Client4 Razorback2 4 A 5 B 4 &
 stop:
 	killall -q rmiregistry &
-	sleep 2
 	killall -q xterm &

@@ -1,7 +1,6 @@
 package client;
 
 import gui.ClientGui;
-
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.MalformedURLException;
@@ -9,17 +8,17 @@ import java.rmi.Naming;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Vector;
-
 import risorsa.Risorsa;
 import server.RServer;
+
 public class Client extends java.rmi.server.UnicastRemoteObject implements RClient {
 	private static final String HOST = "localhost";
 	private int sleep=2000;//tempo di upload
 	private int download; //capacità di download del client
+	private boolean downloading=false;
 	private String name;   //nome client
 	private RServer rs=null;    // riferimento al server a cui è connesso
 	private Vector<Risorsa> risorse; //vettore di risorse di cui dispone il client
-	private Integer downloadattivi=0; //numero di download attivi
 	private ClientGui gui;
 	
 	//costruttore del client
@@ -63,8 +62,13 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 	}
 	
 	public void eseguiDownload(String n,int p){
-		Download d=new Download(n,p,this);
-		d.start();
+		if(!downloading){
+			Download d=new Download(n,p,this);
+			d.start();
+		}
+		else{
+			gui.addLog("Stai già scaricando...Aspetta");
+		}
 	}
 	//thread addetto al download parte alla pressione del tasto download
 	class Download extends Thread{
@@ -73,7 +77,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		int parti;
 		Vector<ScaricaRisorsa> downloads=new Vector<ScaricaRisorsa>();//array di thread 
 		Vector<RClient> ClientRisorsa=new Vector<RClient>();
-		int downloadsessione=0;
+		Integer downloadsessione=0;
 		int partiscaricate=0; //contatore di parti scaricate correttamente
 		Client c;//client che scarica
 		Download(String n,int p,Client c){
@@ -84,7 +88,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		//cerca di scaricare la risorsa
 		public void run(){
 				if(rs==null)
-					System.out.println("LOL");
 					try {
 						rs.exist();
 					} catch (RemoteException e) {
@@ -97,7 +100,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 				System.out.println("Ottenuta la lista di client con la risorsa"+nome+parti);
 				gui.addLog("Ottenuta la lista di client con la risorsa"+nome+parti);
 			} catch (RemoteException e) {
-				// TODO Auto-generated catch block
 				gui.addLog("Errore nel download della lista di client con la risorsa cercata");
 				return;
 			}
@@ -109,14 +111,14 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 			}
 			if(downloads!=null){
 				while(partiscaricate!=parti){//finchè non ho scaricato tutte le parti o non ho nessuno da cui scaricare
-					synchronized(downloadattivi){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
-						int downloadpossibili=download-downloadattivi;//NB avendo il lock su download attivi e download non può cambiare valore so di fare un operazione sicura
+					synchronized(downloadsessione){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
+						int downloadpossibili=download-downloadsessione;//NB avendo il lock su download attivi e download non può cambiare valore so di fare un operazione sicura
 						for(int i=0;i<downloadpossibili && downloads.size()!=0;i++){
 								System.out.println("la dimensione di Download è" +downloads.size());
 								downloads.get(0).start();
-								downloadattivi=downloadattivi+1;
 								downloadsessione=downloadsessione+1;
-								//gui.addDownElement(name,nome,parti);
+								System.out.println(name+nome+parti);
+								gui.addDownElement(name,nome,parti);
 								downloads.remove(0);//rimuovo la possibilità di scaricare da questo client in quanto un download è appena stato avviato
 								System.out.println("i client rimasti da cui posso scaricare sono"+downloads.size());
 						}
@@ -161,16 +163,12 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 				client.upload();//invocato sul client da cui voglio scaricare
 				System.out.println("RISORSA RICEVUTA da "+client.getname());
 				padre.partiscaricate=padre.partiscaricate+1;//non arriva qui se ci sono problemi
-				System.out.println("MAGIA 1");
 				padre.downloads.add(new ScaricaRisorsa(client,padre));//il download da client è finito correttamente, posso se serve riscaricare da lui ora
-				System.out.println("MAGIA 2 con downloads size" +padre.downloads.size());
-				padre.downloadsessione=padre.downloadsessione-1;
-				System.out.println("MAGIA 3");
 			} catch (RemoteException e) {
 				// GESTISCO L' eccezione di fallito download
 				e.printStackTrace();
 			}//al termine di tutto che sia andato bene o male il download è finito
-			downloadattivi=downloadattivi-1;
+			padre.downloadsessione=padre.downloadsessione-1;
 		}
 		public boolean getdone(){
 			return scaricata;
