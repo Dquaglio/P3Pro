@@ -50,6 +50,12 @@ public class ClientGui extends JFrame{
 			partirisorsa=p;
 			status=stat;
 		}
+		public boolean uguali(oggettolista obj){
+			if(this.nomeclient.equals(obj.nomeclient) && this.nomerisorsa.equals(obj.nomerisorsa) && this.partirisorsa==obj.partirisorsa){
+				return true;
+			}
+			else return false;
+		}
 		public void changestatus(int stat){//0 in corso 1 finito 2 fallito
 			status=stat;
 		}
@@ -66,6 +72,12 @@ public class ClientGui extends JFrame{
 			}
 			return "Client "+nomeclient+"risorsa "+nomerisorsa+partirisorsa+"status "+state;
 		}
+		public String getAll(){
+			return nomeclient+" "+nomerisorsa+" "+partirisorsa+" "+status;
+		}
+	}
+	public int getListSize(){
+		return listacdownload.size();
 	}
 	public ClientGui(Client c){
 		this.c=c;
@@ -140,34 +152,37 @@ public class ClientGui extends JFrame{
 	    }
 		fcompleti.setModel(model);
 	}
-	public void addDownElement(String nc,String nr,int p) {
-		int status=0;
-		listacdownload.add(new oggettolista(nc,nr,p,status));
-		modelcoda.addElement(listacdownload.lastElement().getstatus());
-        cdownload.setModel(modelcoda);//aggiorno la lista dei download
-		
-	}
-	public void completedownload(String name, String nome, int parti) {
-		boolean found=false;
-		int i=0;
-		while(!found){
-			if(listacdownload.elementAt(i).equals(new oggettolista(name,nome,parti,0))){
-				listacdownload.get(i).changestatus(1);
-				found=true;
-			}
-			i=i+1;
-		}
-		modelcoda.clear();
+	public void aggiornalista(){
+		/*synchronized(listacdownload){*/
+		modelcoda=new DefaultListModel<String>();
 		for(int j=0;j<listacdownload.size();j++){
+			System.out.println("AGGIORNO VIEW");
 			modelcoda.addElement(listacdownload.get(j).getstatus());
 		}
 		cdownload.setModel(modelcoda);
+		/*}*/
+	}
+	public void addDownElement(String nc,String nr,int p) {
+		/*synchronized(listacdownload){*/
+			System.out.println("AGGIUNGO ELEMENTO");
+			int status=0;//status=0 significa in download
+			listacdownload.add(new oggettolista(nc,nr,p,status));
+			aggiornalista();
+		/*}*/
+		
+	}
+	public void completedownload(String name, String nome, int parti, int index) {
+		/*synchronized(listacdownload){*/
+			System.out.println("CAMBIO STATO ELEMENTO"+name+nome+parti);
+			listacdownload.elementAt(index).changestatus(1);
+			aggiornalista();
+	/*	}*/
 	}
 	public void faildownload(String name, String nome, int parti) {
 		boolean found=false;
 		int i=0;
 		while(!found){
-			if(listacdownload.elementAt(i).equals(new oggettolista(name,nome,parti,0))){
+			if(listacdownload.elementAt(i).uguali(new oggettolista(name,nome,parti,0))){
 				listacdownload.get(i).changestatus(2);
 				found=true;
 			}

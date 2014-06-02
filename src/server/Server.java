@@ -63,13 +63,13 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 							}
 						} catch (RemoteException e) {
 							// TODO Auto-generated catch block
-							e.printStackTrace();
+							//e.printStackTrace();
 						} catch (MalformedURLException e) {
 							// TODO Auto-generated catch block
-							e.printStackTrace();
+							//e.printStackTrace();
 						} catch (NotBoundException e) {
 							// TODO Auto-generated catch block
-							e.printStackTrace();
+							//e.printStackTrace();
 						}
 				}
 				try {

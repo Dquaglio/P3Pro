@@ -33,7 +33,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 				System.out.println("Window closed");
 				disconnect();
 				gui.setVisible(false);
-				gui.dispose();		
+				gui.dispose();
 			}
 		});
 		if(rs==null){
@@ -77,10 +77,11 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		int parti;
 		Vector<ScaricaRisorsa> downloads=new Vector<ScaricaRisorsa>();//array di thread 
 		Vector<RClient> ClientRisorsa=new Vector<RClient>();
-		Integer downloadsessione=0;
+		Integer downloadattivi=0;
 		int partiscaricate=0; //contatore di parti scaricate correttamente
 		Client c;//client che scarica
 		Download(String n,int p,Client c){
+			setDaemon(true);
 			nome=n;
 			parti=p;
 			this.c=c;
@@ -107,20 +108,17 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 			System.out.println("dimensione client con risorsa"+ClientRisorsa.size());
 			//ho il vettore di client con la risorsa
 			for(int j=0;j<ClientRisorsa.size();j++){//mi creo il vector 
-				downloads.add(new ScaricaRisorsa(ClientRisorsa.get(j),this));
+				downloads.add(new ScaricaRisorsa(ClientRisorsa.get(j),this,nome,parti));
 			}
 			if(downloads!=null){
 				while(partiscaricate!=parti){//finchè non ho scaricato tutte le parti o non ho nessuno da cui scaricare
-					synchronized(downloadsessione){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
-						int downloadpossibili=download-downloadsessione;//NB avendo il lock su download attivi e download non può cambiare valore so di fare un operazione sicura
-						for(int i=0;i<downloadpossibili && downloads.size()!=0;i++){
-								System.out.println("la dimensione di Download è" +downloads.size());
+					int partirimanenti=parti-partiscaricate;
+					synchronized(downloadattivi){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
+						int downloadpossibili=download-downloadattivi;//NB avendo il lock su downloadsessione e download non può cambiare valore so di fare un operazione sicura
+						for(int i=0;i<downloadpossibili && downloads.size()!=0 && downloadattivi<partirimanenti;i++){
 								downloads.get(0).start();
-								downloadsessione=downloadsessione+1;
-								System.out.println(name+nome+parti);
-								gui.addDownElement(name,nome,parti);
+								downloadattivi=downloadattivi+1;
 								downloads.remove(0);//rimuovo la possibilità di scaricare da questo client in quanto un download è appena stato avviato
-								System.out.println("i client rimasti da cui posso scaricare sono"+downloads.size());
 						}
 					}
 				}
@@ -153,22 +151,31 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		boolean scaricata=false;
 		RClient client;
 		Download padre;
-		ScaricaRisorsa(RClient c, Download father){
+		String nomeris;
+		int partiris;
+		ScaricaRisorsa(RClient c, Download father, String nome, int parti){
+			setDaemon(true);
 			client=c;
 			padre=father;
+			nomeris=nome;
+			partiris=parti;
 		}
 		public void run(){
 			try {
-				System.out.println("il client "+name+" cerca la risorsa da"+client.getname());
+				/*aggiorno la gui*/
+				int index=gui.getListSize();
+				gui.addDownElement(client.getname(),nomeris,partiris);
 				client.upload();//invocato sul client da cui voglio scaricare
 				System.out.println("RISORSA RICEVUTA da "+client.getname());
 				padre.partiscaricate=padre.partiscaricate+1;//non arriva qui se ci sono problemi
-				padre.downloads.add(new ScaricaRisorsa(client,padre));//il download da client è finito correttamente, posso se serve riscaricare da lui ora
+				padre.downloads.add(new ScaricaRisorsa(client,padre,nomeris,partiris));//il download da client è finito correttamente, posso se serve riscaricare da lui ora
+				/*aggiorno la gui*/
+				gui.completedownload(client.getname(), nomeris, partiris,index);
 			} catch (RemoteException e) {
 				// GESTISCO L' eccezione di fallito download
 				e.printStackTrace();
 			}//al termine di tutto che sia andato bene o male il download è finito
-			padre.downloadsessione=padre.downloadsessione-1;
+			padre.downloadattivi=padre.downloadattivi-1;
 		}
 		public boolean getdone(){
 			return scaricata;
@@ -177,7 +184,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 	
 	public int upload()throws RemoteException{
 		try {
-			System.out.println("il client sta dando la risorsa"+name);
 			Thread.sleep(sleep);//simulo il download
 			return 1;//tutto ok
 		} catch (InterruptedException e) {
@@ -195,20 +201,16 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 	public RClient haveresource(String n,int p) throws RemoteException {
 		//ricerco nell array la risorsa
 		boolean	found=false;
-		System.out.println("IL client "+name+" controlla se ha la risorsa "+n+p);
 		for(int i=0;!found && i<risorse.size();i++){
-			System.out.println(i);
 			if(risorse.get(i).getnome().equals(n)){
 				if(risorse.get(i).getparti()==p){
 				found=true;
 			}}
 		}
 		if(found){
-			System.out.println("IL client "+name+"ha la risorsa ");
 			return this;
 		}
 		else{ 
-			System.out.println("IL client "+name+" non ha la risorsa ");
 			return null;
 		}
 	}
