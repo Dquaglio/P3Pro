@@ -7,6 +7,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.rmi.RemoteException;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -24,12 +25,12 @@ import client.Client;
 
 public class ClientGui extends JFrame{
 	private Client c;
-	DefaultListModel<Risorsa> model = new DefaultListModel<Risorsa>();
+	DefaultListModel<String> modelrisorsa = new DefaultListModel<String>();
 	DefaultListModel<String> modelcoda = new DefaultListModel<String>();
 	private JTextField ricerca=new JTextField(5);
 	private JButton searchbutton=new JButton("Cerca");
 	private JButton disconnect=new  JButton();
-	private JList<Risorsa> fcompleti=new JList<Risorsa>();
+	private JList<String> fcompleti=new JList<String>();
 	private JList<String> cdownload=new JList<String>();
 	private Vector<oggettolista> listacdownload=new Vector<oggettolista>();
 	private JTextArea Log=new JTextArea(8,20);
@@ -39,6 +40,8 @@ public class ClientGui extends JFrame{
 	private JPanel centerleft=new JPanel();
 	private JPanel centerright=new JPanel();
 	private JPanel bot=new JPanel();
+	private Object Lock=new Object();
+	/*Classe oggettolista*/
 	public class oggettolista{
 		String nomeclient;
 		String nomerisorsa;
@@ -76,10 +79,10 @@ public class ClientGui extends JFrame{
 			return nomeclient+" "+nomerisorsa+" "+partirisorsa+" "+status;
 		}
 	}
-	public int getListSize(){
+	public synchronized int getListSize(){
 		return listacdownload.size();
 	}
-	public ClientGui(Client c){
+	public ClientGui(Client c,Vector<Risorsa>risorse) throws RemoteException{
 		this.c=c;
 		//toppanel
 		CreateTopPanel();
@@ -94,9 +97,12 @@ public class ClientGui extends JFrame{
 		setTitle(c.getname());
 		setSize( 600,700 );
 		setVisible(true);
-		setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		setRisorse(risorse);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
-
+	public void RemovClientRef(){
+		c=null;
+	}
 	public void CreateBotPanel(){
 		bot.setLayout(new GridLayout(1,1));
 		bot.setBorder(BorderFactory.createTitledBorder("Log"));
@@ -119,8 +125,15 @@ public class ClientGui extends JFrame{
                     return;
                 }
                 else{
-                    c.eseguiDownload(a[0],Integer.parseInt(a[1]));
-                    addLog("Preparazione al download...");
+                    try {
+						c.eseguiDownload(a[0],Integer.parseInt(a[1]));
+					} catch (NumberFormatException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					} catch (RemoteException e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+					}
                 }
             }
         });
@@ -130,13 +143,11 @@ public class ClientGui extends JFrame{
 		centerleft.setBorder(BorderFactory.createTitledBorder("File Completi"));
 		centerright.setLayout(new GridLayout());
 		centerright.setBorder(BorderFactory.createTitledBorder("Coda Download"));
-        modelcoda.addElement("PROVA");
 		cdownload.setModel(modelcoda);
 		JScrollPane scrollrightPanel = new JScrollPane(cdownload, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		JScrollPane scrollleftPanel = new JScrollPane(fcompleti, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
 		centerleft.add(scrollleftPanel);
 		centerright.add(scrollrightPanel);
-			
 		center.setLayout(new GridLayout(1,2));
 		center.add(centerleft);
 		center.add(centerright);
@@ -146,53 +157,47 @@ public class ClientGui extends JFrame{
 		Log.append(s+"\n");
 	}
 	
-	public void setrisorse(Vector<Risorsa> l) {
+	public void setRisorse(Vector<Risorsa> l) throws RemoteException {
 		for (int i=0; i<l.size(); i++) { 
-			model.addElement(l.get(i)); 
+			modelrisorsa.addElement(l.get(i).getnome()+" "+l.get(i).getparti()); 
 	    }
-		fcompleti.setModel(model);
+		fcompleti.setModel(modelrisorsa);
 	}
-	public void aggiornalista(){
-		/*synchronized(listacdownload){*/
-		modelcoda=new DefaultListModel<String>();
-		for(int j=0;j<listacdownload.size();j++){
-			System.out.println("AGGIORNO VIEW");
-			modelcoda.addElement(listacdownload.get(j).getstatus());
+	public void addRisorsa(Risorsa r) throws RemoteException{
+		modelrisorsa.addElement(r.getnome()+" "+r.getparti());
 		}
-		cdownload.setModel(modelcoda);
-		/*}*/
+	/*Metodi per gestire la lista dei download*/
+	public void aggiornalista(){
+		synchronized(Lock){
+			modelcoda=new DefaultListModel<String>();
+			for(int j=0;j<listacdownload.size();j++){
+				modelcoda.addElement(listacdownload.get(j).getstatus());
+			}
+			cdownload.setModel(modelcoda);
+		}
 	}
+	
 	public void addDownElement(String nc,String nr,int p) {
-		/*synchronized(listacdownload){*/
-			System.out.println("AGGIUNGO ELEMENTO");
-			int status=0;//status=0 significa in download
-			listacdownload.add(new oggettolista(nc,nr,p,status));
-			aggiornalista();
-		/*}*/
+		synchronized(Lock){
+		int status=0;//status=0 significa in download
+		listacdownload.add(new oggettolista(nc,nr,p,status));
+		aggiornalista();
+		}
 		
 	}
-	public void completedownload(String name, String nome, int parti, int index) {
-		/*synchronized(listacdownload){*/
-			System.out.println("CAMBIO STATO ELEMENTO"+name+nome+parti);
-			listacdownload.elementAt(index).changestatus(1);
-			aggiornalista();
-	/*	}*/
+	
+	public void completedownload(int index) {
+		synchronized(Lock){
+		listacdownload.elementAt(index).changestatus(1);
+		aggiornalista();
+		}
 	}
-	public void faildownload(String name, String nome, int parti) {
-		boolean found=false;
-		int i=0;
-		while(!found){
-			if(listacdownload.elementAt(i).uguali(new oggettolista(name,nome,parti,0))){
-				listacdownload.get(i).changestatus(2);
-				found=true;
-			}
-			i=i+1;
+	
+	public void faildownload(int index) {
+		synchronized(Lock){
+		listacdownload.elementAt(index).changestatus(2);
+		aggiornalista();
 		}
-		modelcoda.clear();
-		for(int j=0;j<listacdownload.size();j++){
-			modelcoda.addElement(listacdownload.get(j).getstatus());
-		}
-		cdownload.setModel(modelcoda);
 	}
 
 }

@@ -47,7 +47,7 @@ public class ServerGui extends JFrame{
 				}
 		  }
 	}
-	public ServerGui(Server a){                   //costruttore
+	public ServerGui(Server a){            //costruttore
 		s=a;
 		addWindowListener(new WindowEventHandler());
 		//creo i vari pannelli
