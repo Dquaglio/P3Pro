@@ -59,6 +59,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 								RServer rs=(RServer)Naming.lookup(a[i]);
 								listaserver.add(rs);
 							}
+							gui.setServerList(a);
 						} catch (RemoteException e) {
 							gui.addLog("Server non più raggiungibile");
 						} catch (MalformedURLException e) {
@@ -66,6 +67,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 						} catch (NotBoundException e) {
 							gui.addLog("Server non esistente");
 						}
+					
 				}
 				try {
 					Thread.sleep(100);

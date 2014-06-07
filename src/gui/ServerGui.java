@@ -10,8 +10,10 @@ import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.util.Observable;
 import java.util.Observer;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListModel;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
@@ -19,6 +21,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.WindowConstants;
 
+import server.RServer;
 import server.Server;
 
 public class ServerGui extends JFrame{
@@ -27,9 +30,11 @@ public class ServerGui extends JFrame{
 	private JPanel rightpanel=new JPanel();//server connessi
 	private JPanel leftpanel=new JPanel();//client connessi
 	private JPanel botpanel=new JPanel();//Log
-	private JList<String> rightarea = new JList<String>();
-	private JList<String> leftarea = new JList<String>();
+	private JList<String> serverArea = new JList<String>();
+	private JList<String> clientArea = new JList<String>();
 	private JTextArea Log = new JTextArea(8,20);
+	DefaultListModel<String> modelServer = new DefaultListModel<String>();
+	DefaultListModel<String> modelClient = new DefaultListModel<String>();
 	
 	class WindowEventHandler extends WindowAdapter {
 		  public void windowClosing(WindowEvent evt) {
@@ -57,12 +62,14 @@ public class ServerGui extends JFrame{
 		botpanel.add(scrollbotPanel);
 		
 		
-		JScrollPane scrollrightPanel = new JScrollPane(rightarea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JScrollPane scrollrightPanel = new JScrollPane(serverArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		serverArea.setModel(modelServer);
 		rightpanel.setLayout( new GridLayout(1,1) );
 		rightpanel.setBorder(BorderFactory.createTitledBorder("Server Connessi"));
 		rightpanel.add(scrollrightPanel);
 	
-		JScrollPane scrollleftPanel = new JScrollPane(leftarea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		JScrollPane scrollleftPanel = new JScrollPane(clientArea, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED,JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+		clientArea.setModel(modelClient);
 		leftpanel.setLayout( new GridLayout(1,1) );
 		leftpanel.setBorder(BorderFactory.createTitledBorder("Client Connessi"));
 		leftpanel.add(scrollleftPanel);
@@ -81,5 +88,12 @@ public class ServerGui extends JFrame{
 	}
 	public void addLog(String s){
 		Log.append(s+"\n");
+	}
+	public void setServerList(String[] ServerList){
+		modelServer=new DefaultListModel<String>();
+		for(int i=0;i<ServerList.length;i++){
+			modelServer.addElement(ServerList[i]);
+		}
+		serverArea.setModel(modelServer);
 	}
 }

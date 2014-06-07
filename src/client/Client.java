@@ -64,6 +64,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 	public void eseguiDownload(String n,int p) throws RemoteException{
 		if(!downloading){
 			if(haveresource(n,p)==null){
+				downloading=true;
 				Download d=new Download(n,p,this);
 				d.start();
 			}
@@ -144,6 +145,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 					gui.addLog("Errore nella creazione della risorsa");
 				}
 			}
+			downloading=false;
 		}
 	}
 	public void eseguiDownload(){
