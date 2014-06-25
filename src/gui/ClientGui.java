@@ -71,7 +71,7 @@ public class ClientGui extends JFrame{
 			if(status==2){
 				state="fallito";
 			}
-			return "Client "+nomeclient+"risorsa "+nomerisorsa+partirisorsa+"status "+state;
+			return nomeclient+"risorsa "+nomerisorsa+":"+partirisorsa+"status "+state;
 		}
 		public String getAll(){
 			return nomeclient+" "+nomerisorsa+" "+partirisorsa+" "+status;

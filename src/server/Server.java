@@ -120,6 +120,7 @@ public class Server extends java.rmi.server.UnicastRemoteObject implements RServ
 		synchronized(lockclient){
 			listaclient.remove(client);
 			gui.setClienList(listaclient);
+			gui.addLog(client.getname()+" Disconnesso");
 		}
 	}
 

@@ -120,12 +120,11 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 			}
 			if(downloads!=null){
 				while( partiscaricate!=parti &&  !(downloads.size()==0 && downloadattivi.equals(0) ) ){//finchè non ho scaricato tutte le parti o non ho nessuno da cui scaricare
-					int partirimanenti=parti-partiscaricate;
+					//int partirimanenti=;
 					synchronized(this){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
 						int downloadpossibili=download-downloadattivi;//NB avendo il lock su downloadsessione e download non può cambiare valore so di fare un operazione sicura
-						for(int i=0;i<downloadpossibili && downloads.size()!=0 && downloadattivi<partirimanenti;i++){
+						for(int i=0;i<downloadpossibili && downloads.size()!=0 && downloadattivi<(parti-partiscaricate);i++){
 							downloads.get(0).start();
-							gui.addLog("faccio partire un nuovo download portando dwonload attivi a  "+downloadattivi);
 							downloadattivi=downloadattivi+1;
 							downloads.remove(0);//rimuovo la possibilità di scaricare da questo client in quanto un download è appena stato avviato
 						}
