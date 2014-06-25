@@ -27,7 +27,7 @@ public class ClientGui extends JFrame{
 	DefaultListModel<String> modelcoda = new DefaultListModel<String>();
 	private JTextField ricerca=new JTextField(5);
 	private JButton searchbutton=new JButton("Cerca");
-	private JButton disconnect=new  JButton();
+	private JButton disconnectbutton=new  JButton();
 	private JList<String> fcompleti=new JList<String>();
 	private JList<String> cdownload=new JList<String>();
 	private Vector<oggettolista> listacdownload=new Vector<oggettolista>();
@@ -113,17 +113,17 @@ public class ClientGui extends JFrame{
 		toppanel.add(searchbutton);
 		top.setLayout(new GridLayout(1,2));
 		top.add(toppanel);
-		top.add(disconnect);
-        searchbutton.addActionListener(new ActionListener() {//gestione dell avvio download
-            public void actionPerformed(ActionEvent e) {
-                String s = ricerca.getText();
-                String [] a = s.split("\\s+");
-                if (a.length < 2) {
-                    addLog("Dati inseriti non corretti");
-                    return;
-                }
-                else{
-                    try {
+		top.add(disconnectbutton);
+		searchbutton.addActionListener(new ActionListener() {//gestione dell avvio download
+			public void actionPerformed(ActionEvent e) {
+				String s = ricerca.getText();
+				String [] a = s.split("\\s+");
+				if (a.length < 2) {
+					addLog("Dati inseriti non corretti");
+					return;
+				}
+				else{
+					try {
 						c.eseguiDownload(a[0],Integer.parseInt(a[1]));
 					} catch (NumberFormatException e1) {
 						// TODO Auto-generated catch block
@@ -132,9 +132,14 @@ public class ClientGui extends JFrame{
 						// TODO Auto-generated catch block
 						e1.printStackTrace();
 					}
-                }
-            }
-        });
+				}
+			}
+		});
+		disconnectbutton.addActionListener(new ActionListener() {//gestione dell avvio download
+			public void actionPerformed(ActionEvent e) {
+				c.disconnect();
+			}
+		});
 	}
 	public void CreateCenterPanel(){
 		centerleft.setLayout(new GridLayout(1,1));
@@ -150,20 +155,20 @@ public class ClientGui extends JFrame{
 		center.add(centerleft);
 		center.add(centerright);
 	}
-	
+
 	public void addLog(String s){
 		Log.append(s+"\n");
 	}
-	
+
 	public void setRisorse(Vector<Risorsa> l) throws RemoteException {
 		for (int i=0; i<l.size(); i++) { 
 			modelrisorsa.addElement(l.get(i).getnome()+" "+l.get(i).getparti()); 
-	    }
+		}
 		fcompleti.setModel(modelrisorsa);
 	}
 	public void addRisorsa(Risorsa r) throws RemoteException{
 		modelrisorsa.addElement(r.getnome()+" "+r.getparti());
-		}
+	}
 	/*Metodi per gestire la lista dei download*/
 	public void aggiornalista(){
 		synchronized(Lock){
@@ -174,27 +179,27 @@ public class ClientGui extends JFrame{
 			cdownload.setModel(modelcoda);
 		}
 	}
-	
+
 	public void addDownElement(String nc,String nr,int p) {
 		synchronized(Lock){
-		int status=0;//status=0 significa in download
-		listacdownload.add(new oggettolista(nc,nr,p,status));
-		aggiornalista();
+			int status=0;//status=0 significa in download
+			listacdownload.add(new oggettolista(nc,nr,p,status));
+			aggiornalista();
 		}
-		
+
 	}
-	
+
 	public void completedownload(int index) {
 		synchronized(Lock){
-		listacdownload.elementAt(index).changestatus(1);
-		aggiornalista();
+			listacdownload.elementAt(index).changestatus(1);
+			aggiornalista();
 		}
 	}
-	
+
 	public void faildownload(int index) {
 		synchronized(Lock){
-		listacdownload.elementAt(index).changestatus(2);
-		aggiornalista();
+			listacdownload.elementAt(index).changestatus(2);
+			aggiornalista();
 		}
 	}
 

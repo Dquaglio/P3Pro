@@ -13,14 +13,14 @@ import server.RServer;
 
 public class Client extends java.rmi.server.UnicastRemoteObject implements RClient {
 	private static final String HOST = "localhost";
-	private int sleep=2000;//tempo di upload
+	private int sleep=5000;//tempo di upload
 	private int download; //capacità di download del client
 	private boolean downloading=false;
 	private String name;   //nome client
 	private RServer riferimentoServer=null;    // riferimento al server a cui è connesso
 	private Vector<Risorsa> risorse; //vettore di risorse di cui dispone il client
 	private ClientGui gui;
-	
+
 	//costruttore del client
 	public Client(String n,String s,String d,Vector<Risorsa>r) throws RemoteException{// n= nome ; s=  nome server ; d capacità di download; r vettore di risorse
 		download=Integer.parseInt(d);//converti d in int
@@ -44,7 +44,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		}
 		riferimentoServer.addclient(this);
 	}
-	
+
 	//metodo per la connessione del client al server
 	public RServer connetti(String  s){
 		RServer ref = null;
@@ -60,7 +60,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		return ref;
 		//ho il rif rem al server
 	}
-	
+
 	public void eseguiDownload(String n,int p) throws RemoteException{
 		if(!downloading){
 			if(haveresource(n,p)==null){
@@ -91,24 +91,24 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 			nome=n;
 			parti=p;
 			this.c=c;
-            gui.addLog("Preparazione al download...");
+			gui.addLog("Preparazione al download...");
 		}
 		//cerca di scaricare la risorsa
 		public void run(){
-				if(riferimentoServer!=null){
-					try {
-						riferimentoServer.exist();
-					} catch (RemoteException e) {
-						riferimentoServer=null;
-						gui.addLog("Impossibile cercare la risorsa, server non raggiungibile");
-						return;
-					}
-				}else{
-					gui.addLog("Server non raggiungibile!!");
+			if(riferimentoServer!=null){
+				try {
+					riferimentoServer.exist();
+				} catch (RemoteException e) {
+					riferimentoServer=null;
+					gui.addLog("Impossibile cercare la risorsa, server non raggiungibile");
+					return;
 				}
+			}else{
+				gui.addLog("Server non raggiungibile!!");
+			}
 			try {
 				ClientRisorsa=riferimentoServer.cercarisorsa(nome,parti,c);//ottengo i client con la risorsa
-				
+
 				gui.addLog("Ottenuta la lista di client con la risorsa "+nome+parti);
 			} catch (RemoteException e) {
 				gui.addLog("Errore nel download della lista di client con la risorsa cercata");
@@ -119,14 +119,15 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 				downloads.add(new ScaricaRisorsa(ClientRisorsa.get(j),this,nome,parti));
 			}
 			if(downloads!=null){
-				while(partiscaricate!=parti){//finchè non ho scaricato tutte le parti o non ho nessuno da cui scaricare
+				while( partiscaricate!=parti &&  !(downloads.size()==0 && downloadattivi.equals(0) ) ){//finchè non ho scaricato tutte le parti o non ho nessuno da cui scaricare
 					int partirimanenti=parti-partiscaricate;
-					synchronized(downloadattivi){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
+					synchronized(this){//lock su downloadattivi in modo che il client non possa scaricare piu della capacità massima contemporaneamente
 						int downloadpossibili=download-downloadattivi;//NB avendo il lock su downloadsessione e download non può cambiare valore so di fare un operazione sicura
 						for(int i=0;i<downloadpossibili && downloads.size()!=0 && downloadattivi<partirimanenti;i++){
-								downloads.get(0).start();
-								downloadattivi=downloadattivi+1;
-								downloads.remove(0);//rimuovo la possibilità di scaricare da questo client in quanto un download è appena stato avviato
+							downloads.get(0).start();
+							gui.addLog("faccio partire un nuovo download portando dwonload attivi a  "+downloadattivi);
+							downloadattivi=downloadattivi+1;
+							downloads.remove(0);//rimuovo la possibilità di scaricare da questo client in quanto un download è appena stato avviato
 						}
 					}
 				}
@@ -139,7 +140,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 				try {
 					risorse.add(new Risorsa(nome,parti));
 					gui.addRisorsa(risorse.lastElement());
-				    gui.addLog("Risorsa scaricata correttamente");
+					gui.addLog("Risorsa scaricata correttamente");
 				} catch (RemoteException e) {
 					//errore nella creazione della risorsa
 					gui.addLog("Errore nella creazione della risorsa");
@@ -147,9 +148,6 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 			}
 			downloading=false;
 		}
-	}
-	public void eseguiDownload(){
-		
 	}
 	//metodo per il download di una parte di risorsa da un client
 	class ScaricaRisorsa extends Thread{
@@ -168,37 +166,43 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		}
 		public void run(){
 			int index=-1;
-				try {
+			try {
 				/*aggiorno la gui*/
 				synchronized(gui){
 					index=gui.getListSize();
 					gui.addDownElement(client.getname(),nomeris,partiris);
+					gui.addLog("Inizio download parte da "+client.getname());
 				}
 				client.upload();//invocato sul client da cui voglio scaricare
 				gui.addLog("Parte di risorsa ricevuta da "+client.getname());
-				padre.partiscaricate=padre.partiscaricate+1;//non arriva qui se ci sono problemi
-				padre.downloads.add(new ScaricaRisorsa(client,padre,nomeris,partiris));//il download da client è finito correttamente, posso se serve riscaricare da lui ora
-				/*aggiorno la gui*/
+				synchronized(padre){//in questo modo so che partiscaricate e downloadattivi non li tocca nessun altro
+					padre.partiscaricate=padre.partiscaricate+1;//non arriva qui se ci sono problemi
+					padre.downloadattivi=padre.downloadattivi-1;
+					padre.downloads.add(new ScaricaRisorsa(client,padre,nomeris,partiris));//il download da client è finito correttamente, posso se serve riscaricare da lui ora
+				}/*aggiorno la gui*/
 				synchronized(gui){
 					gui.completedownload(index);
-				}
+				}		
 			} catch (RemoteException e) {
-				gui.addLog("Uno dei Client da cui si stava scaricando non è più raggiungibile");
-				gui.faildownload(index);
+				synchronized(padre){
+					gui.addLog("Uno dei Client da cui si stava scaricando non è più raggiungibile");
+					gui.faildownload(index);
+					padre.downloadattivi=padre.downloadattivi-1;
+				}
 			}//al termine di tutto che sia andato bene o male il download è finito
-			padre.downloadattivi=padre.downloadattivi-1;
+
 		}
 		public boolean getdone(){
 			return scaricata;
 		}
 	}
-	
+
 	public void upload()throws RemoteException{
 		try {
 			Thread.sleep(sleep);//simulo il download
 		} catch (InterruptedException e) {
 		}
-		
+
 	}
 	//METODI VARI GET
 	public String getname() {
@@ -211,7 +215,7 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		for(int i=0;!found && i<risorse.size();i++){
 			if(risorse.get(i).getnome().equals(n)){
 				if(risorse.get(i).getparti()==p){
-				found=true;
+					found=true;
 				}
 			}
 		}
@@ -223,21 +227,32 @@ public class Client extends java.rmi.server.UnicastRemoteObject implements RClie
 		}
 	}
 	public void disconnect() {
-        if (riferimentoServer != null) {
-            try {
-                riferimentoServer.disconnettiClient(this);
-            } 
-            catch (RemoteException e) { 
-            	gui.addLog("Errore di connessione");
-            }
-            //interrompo il thred che controlla se il server è attivo
-        }
-    }
-	
+		if (riferimentoServer != null) {
+			try {
+				riferimentoServer.disconnettiClient(this);
+				riferimentoServer=null;
+			} 
+			catch (RemoteException e) { 
+				gui.addLog("Errore di connessione");
+			}
+		}
+		else{
+			gui.addLog("Impossibile disconnettersi");
+		}
+	}
+	public String getResourceList() throws RemoteException{
+		String ListaRisorse=null;
+		for(int i=0;i<risorse.size();i++){
+			if(i==0)
+				ListaRisorse=risorse.elementAt(i).getnome()+" "+risorse.elementAt(i).getparti()+" ";
+			ListaRisorse=ListaRisorse+risorse.elementAt(i).getnome()+" "+risorse.elementAt(i).getparti()+" ";
+		}
+		return ListaRisorse;
+	}
 	//quando si disconnette, il server richiama questo metodo
 	public void disconnectServer() throws RemoteException {
 		riferimentoServer=null;
 		gui.addLog("Server Disconnesso");
-		
+
 	}
 }

@@ -1,15 +1,12 @@
 package gui;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.net.MalformedURLException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
-import java.util.Observable;
-import java.util.Observer;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
@@ -19,9 +16,7 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.WindowConstants;
-
-import server.RServer;
+import client.RClient;
 import server.Server;
 
 public class ServerGui extends JFrame{
@@ -41,13 +36,10 @@ public class ServerGui extends JFrame{
 				try {
 					s.uscita();
 				} catch (RemoteException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (MalformedURLException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (NotBoundException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 		  }
@@ -95,5 +87,16 @@ public class ServerGui extends JFrame{
 			modelServer.addElement(ServerList[i]);
 		}
 		serverArea.setModel(modelServer);
+	}
+	public void setClienList(Vector<RClient> ClientList){
+		modelClient=new DefaultListModel<String>();
+		for(int i=0;i<ClientList.size();i++){
+			try {
+				modelClient.addElement(ClientList.elementAt(i).getname());
+			} catch (RemoteException e) {
+				e.printStackTrace();
+			}
+		}
+		clientArea.setModel(modelClient);
 	}
 }
